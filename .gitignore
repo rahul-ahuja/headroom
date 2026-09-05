@@ -159,7 +159,6 @@ api_keys.txt
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*.ipynb
 
 # macOS
 .DS_Store
