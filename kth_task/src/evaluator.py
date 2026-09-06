@@ -23,7 +23,7 @@ class IRMetrics:
             if q_id not in qrels:
                 continue
             
-            # YOUR CODE HERE: Calculate recall for this query
+            # Calculate recall for this query
             # Documents considered relevant are those with # a relevance score greater than zero. 
             relevant_docs = { doc_id for doc_id, relevance in qrels[q_id].items() if relevance > 0 } 
             if not relevant_docs: 
@@ -72,7 +72,7 @@ class IRMetrics:
             if q_id not in qrels:
                 continue
             
-            # YOUR CODE HERE: Calculate MRR for this query
+            # Calculate MRR for this query
 
             relevant_docs = { doc_id for doc_id, relevance in qrels[q_id].items() if relevance > 0 }
 
