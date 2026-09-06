@@ -233,7 +233,7 @@ In the experiments a FAISS vector store retriever is built and benchmarks the la
 ## 📊 Evaluation Metrics Results
 
 There is a tradeoff of computational time in using transformer compressor with accuracy performance boost.
-
+```
 📊 BM25 (Keyword-Based) Results
 ========================================
 Recall@1    : 0.5328
@@ -280,7 +280,7 @@ Recall@10   : MiniLM-L6-v2=0.9497 | MPNet-base=0.9705 | BGE-small=0.9501
 Precision@5 : MiniLM-L6-v2=0.2263 | MPNet-base=0.2333 | BGE-small=0.2264
 MRR         : MiniLM-L6-v2=0.9044 | MPNet-base=0.9297 | BGE-small=0.8996
 ======================================================================
-
+```
 
 ### **Quality Assurance: Unit Tests** ✅
 Unit testing has been carried out to ensure code robustness, Your implementation is validated by a comprehensive test suite:
@@ -292,9 +292,11 @@ Unit testing has been carried out to ensure code robustness, Your implementation
 - **Integration**: Component interaction and data flow
 
 
+## Conclusion
+
 Maintainer seems to be actively working on Langchain fixes as seen in the commit https://github.com/headroomlabs-ai/headroom/commit/5d025f7a03870a402918e6425ca9fcd40400edb2
 
-Conclusion: Given the issues highlighted in my analyzes I would be hasistant to use headroom package for production systems or as a third party library. This package seems to be still on work in progress and not well configured by looking at the commits as well. 
+Given the issues highlighted in my analyzes I would be hasistant to use headroom package for production systems or as a third party library. This package seems to be still on work in progress and not well configured by looking at the commits as well. 
 
 Reference:
 
