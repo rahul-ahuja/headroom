@@ -28,6 +28,6 @@ ipykernel>=6.23.0
 tqdm>=4.65.0
 
 # Headroom
-"headroom-ai[langchain]"
+headroom-ai[langchain]
 langchain-core
 langchain_huggingface

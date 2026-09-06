@@ -11,7 +11,6 @@ headroom/kth_task/
 ├── src/                                        # Core retrieval modules
 │   ├── data_loader.py                          # BeIR/Natural Questions dataset handler
 │   ├── bm25_retriever.py                       # Traditional keyword-based retrieval
-│   ├── word2vec_retriever.py                   # Static embedding retrieval
 │   ├── transformer_retriever.py                # Semantic transformer retrieval
 │   ├── evaluator.py                            # IR metrics calculation
 │   ├── headroom_bm25.py                        # BM25 with HeadroomDocumentCompressor base class
@@ -20,7 +19,6 @@ headroom/kth_task/
 ├── tests/                                      # Unit test suite for validation
 │   ├── test_bm25_retriever.py                  # BM25 retriever tests
 │   ├── test_transformer_retriever.py           # Transformer retriever tests  
-│   ├── test_word2vec_retriever.py              # Word2Vec retriever tests
 │   └── test_evaluator.py                       # IR metrics evaluator tests
 ├── notebooks/
 │   ├── unified_retrieval_comparison.ipynb      # Main analysis notebook
@@ -45,7 +43,6 @@ headroom/kth_task/
 # Test individual components
 python tests/test_bm25_retriever.py        # BM25 keyword search implementation
 python tests/test_evaluator.py             # IR metrics calculation
-python tests/test_word2vec_retriever.py     # Word2Vec embedding implementation  
 python tests/test_transformer_retriever.py  # Transformer semantic search
 
 # Final validation 

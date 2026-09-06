@@ -11,7 +11,7 @@ I also encountered an error stating that `get_metrics` is not included in the pa
 
 To confirm the correct package version is aligned with the codes given in the docs, I ran pip show and found Headroom's 0.37 version being used matches the current version referenced in the code examples given in the documentations.
 
-This has been raised as an issue on the GitHub repo. [LINK]
+These issues have been reported as bugs on the GitHub repo. [Bug 1](https://github.com/headroomlabs-ai/headroom/issues/3445) and [Bug 2](https://github.com/headroomlabs-ai/headroom/issues/3446)
 
 ## Introduction
 
@@ -87,7 +87,7 @@ Transformer architectures make different trade-offs between size, speed, and tas
 
 ## Codes of using the extension
 
-{LINK} Below is the adapted version of Example 2 from Headroom Langchain [docs](https://headroomlabs-ai.github.io/headroom/langchain/) using the extensions developed from this report. These scripts of the extension of Headroom's Compressor has been suggested to the maintainer of headroom as an open-source contributions. In `notebooks/unified_retrieval_comparison`, BM25 algorithm does not retrieve correct document for the given query. Headroom's BM25 and Transformers model retrieves correct document. 
+Below is the adapted version of Example 2 from Headroom Langchain [docs](https://headroomlabs-ai.github.io/headroom/langchain/) using the extensions developed from this report. These scripts of the extension of Headroom's Compressor has been suggested to the maintainer of headroom as an open-source contributions [here](https://github.com/headroomlabs-ai/headroom/issues/3448). In `notebooks/unified_retrieval_comparison`, BM25 algorithm does not retrieve correct document for the given query. Headroom's BM25 and Transformers model retrieves correct document. 
 
 `query = "Which Doctor performed Caesarean?"` 
 
@@ -192,7 +192,7 @@ print(results[0].page_content)
 - **Semantic similarity computation** and top-k retrieval
 - **Understanding**: Experience state-of-the-art semantic search
 
-#### **🤖 `src/headroom_transformer.py` and `src/headroom_bm25.py`  - Extends HeadroomDocumentCompressor baseclass to HeadroomBM25DocumentCompressor and HeadroomTransformerDocumentCompressor **
+#### **🤖 `src/headroom_transformer.py` and `src/headroom_bm25.py`  - Extends HeadroomDocumentCompressor baseclass to HeadroomBM25DocumentCompressor and HeadroomTransformerDocumentCompressor**
 
 **Key concepts:** Sentence embeddings, contextual understanding, transformer models, semantic similarity
 
@@ -204,7 +204,7 @@ Contains utility functions for text processing and system operations.
 
 In the experiments a FAISS vector store retriever is built and benchmarks the latency and output of Headroom's compressor variants (base class, BM25-based, and transformer-based document compression) as a `ContextualCompressionRetriever` wrapped around that base retriever, essentially demonstrating how Headroom's compression layer can be used to filter/re-rank an initial large candidate set. An example, top-100 FAISS results down to a smaller, more relevant set while measuring the added latency.
 
-## 📊 Below is explanation of the Evaluation Metrics
+## 📊 Explanation of the Evaluation Metrics
 
 **Recall@k**: Found relevant docs / Total relevant docs  
 *Example: 3 found out of 5 relevant → Recall@5 = 60%*  
@@ -230,7 +230,57 @@ In the experiments a FAISS vector store retriever is built and benchmarks the la
 - **Precision@k**: What fraction of retrieved documents are relevant?
 - **MRR (Mean Reciprocal Rank)**: How quickly do we find the first relevant document?
 
+## 📊 Evaluation Metrics Results
+
 There is a tradeoff of computational time in using transformer compressor with accuracy performance boost.
+
+📊 BM25 (Keyword-Based) Results
+========================================
+Recall@1    : 0.5328
+Recall@5    : 0.7266
+Recall@10   : 0.7740
+Precision@5 : 0.1751
+MRR         : 0.6738
+========================================
+
+📊 headroom_bm25_metrics Results
+========================================
+Recall@1    : 0.4552
+Recall@5    : 0.6361
+Recall@10   : 0.6976
+Precision@5 : 0.1512
+MRR         : 0.5882
+========================================
+
+📊 Transformer (Semantic) Results
+========================================
+Recall@1    : 0.7760
+Recall@5    : 0.9298
+Recall@10   : 0.9497
+Precision@5 : 0.2263
+MRR         : 0.9044
+========================================
+
+📊 Finetuned Transformer (Semantic) Results
+========================================
+Recall@1    : 0.8092
+Recall@5    : 0.9730
+Recall@10   : 0.9845
+Precision@5 : 0.2367
+MRR         : 0.9397
+========================================
+
+📊 Transformer Model Comparison Analysis
+======================================================================
+📊 Transformer Models Performance
+======================================================================
+Recall@1    : MiniLM-L6-v2=0.7760 | MPNet-base=0.8039 | BGE-small=0.7739
+Recall@5    : MiniLM-L6-v2=0.9298 | MPNet-base=0.9587 | BGE-small=0.9320
+Recall@10   : MiniLM-L6-v2=0.9497 | MPNet-base=0.9705 | BGE-small=0.9501
+Precision@5 : MiniLM-L6-v2=0.2263 | MPNet-base=0.2333 | BGE-small=0.2264
+MRR         : MiniLM-L6-v2=0.9044 | MPNet-base=0.9297 | BGE-small=0.8996
+======================================================================
+
 
 ### **Quality Assurance: Unit Tests** ✅
 Unit testing has been carried out to ensure code robustness, Your implementation is validated by a comprehensive test suite:
