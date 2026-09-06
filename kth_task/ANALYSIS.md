@@ -1,28 +1,25 @@
-NOTES:
-Raise Github Issues;
-
 ## Background
 
 Headroom is an open-source context compression layer for AI agents to reduce input tokens to be prcocessed by LLMs. At high-level the workflow is that there's a ContentRouter that detects content type and select the right compressor. In this report, Kompress-v2-base has been used to compress strings and document files. 
 
-I have read the main functionalities of the codebase and setup the headroom as a package on my local computer and also ran experiments on Kaggle and Google Colab. 
+I have understood the main functionalities of the codebase and installed the headroom as a package on my local computer and also ran experiments on Kaggle and Google Colab. 
 
-I have focused on improving the headroom's retrieval integration to langchain. According to the headroom's langchain docs(https://headroomlabs-ai.github.io/headroom/langchain/), token savings should occur when invoking the model with the message "Hello!". However, the docs use OpenAI's GPT-4o as the example model. As per the email by hiring team member, I am expected not to use paid LLM vendors and use open-source LLMs instead such as HuggingFace, Nvidia and OpenRouter. As a result, I wasn't able to run the exact code from the docs to confirm the token savings or reproduce the issue using the example code given in the docs. Instead I ran their examples with HuggingFace API. I managed to run inference via the DeepSeek API locally, and separately downloaded and ran the Qwen LLM model on Kaggle. [file location]. But I failed to compress the tokens using headroom API wrapped on the HuggingFace library. I also tried passing a longer context to Headroom's API, but was not able to compress and save tokens. I wasn't able to achieve any token savings with headroom's Chat Agent for text generation. I also encountered various issues in using Headroom package.
+In this report, I have focused on improving the headroom's retrieval integration to langchain. According to the headroom's langchain [docs](https://headroomlabs-ai.github.io/headroom/langchain/), token savings should occur when invoking the model with the message "Hello!". However, the docs use OpenAI's GPT-4o as the example model. As per the email from hiring team member, I am not expected to use paid LLM vendors and use open-source LLMs instead such as HuggingFace, Nvidia and OpenRouter. As a result, I wasn't able to run the exact code from the docs to confirm the token savings or reproduce the issue using the example code given in the docs. Instead I ran their examples with HuggingFace API. I managed to run inference via the DeepSeek API locally, and separately downloaded and ran the Qwen LLM model on Kaggle (`notebooks/qwen-demo-kaggle.ipynb`). But I failed to compress the number of tokens using headroom API wrapped on the HuggingFace library. I also tried passing a longer context to Headroom's API, but was not able to compress and save tokens. I wasn't able to achieve any token savings with headroom's Chat Agent for text generation. I also encountered various issues in using headroom package.
 
 I also encountered an error stating that `get_metrics` is not included in the package. 
 `AttributeError: 'HeadroomChatModel' object has no attribute 'get_metrics'`
 
-To confirm the correct package version is aligned with the codes given in the docs, I ran pip show and found Headroom's 0.37 version being used which matches the current version referenced in the code examples given in the documentations.
+To confirm the correct package version is aligned with the codes given in the docs, I ran pip show and found Headroom's 0.37 version being used matches the current version referenced in the code examples given in the documentations.
 
 This has been raised as an issue on the GitHub repo. [LINK]
 
 ## Introduction
 
-For this report, I have extended `HeadroomDocumentCompressor` with additional techniques to reduce the number of retrieved documents. I adapted Example 2 ("RAG Pipeline with Document Filtering") from the docs, but encountered the issue because the `ContextualCompressionRetriever` has been moved to `langchain_classic`, meaning it is deprecated and no longer actively maintained. Therefore, it is recommended to be used.
+For this report, I have extended `HeadroomDocumentCompressor` with additional techniques to reduce the number of retrieved documents. I adapted Example 2 ("RAG Pipeline with Document Filtering") from the [docs](https://headroomlabs-ai.github.io/headroom/langchain/), but encountered the issue because the `ContextualCompressionRetriever` has been moved to `langchain_classic`, meaning it is deprecated and no longer actively maintained. Therefore, it is NOT recommended to be used.
 
 `HeadroomDocumentCompressor` is effectively a reranking technique. It selects a smaller, more relevant subset of documents from a larger retrieved set. The idea behind reranking is that the initial retrieval pass is broad and computationally cheap, pulling in many candidate documents, after which a second, more selective step narrows that set down to what the LLM actually uses. This compression step is conceptually similar to retrieval itself, it is just applied downstream.
 
-In Headroom's `ContextualCompressionRetriever`, a naive BM25 algorithm is used for this selection. Because the compression algorithm operates on an already retrieved, smaller set of documents, it can afford to be more robust without becoming computationally expensive. For that reason, I decided to extend `ContextualCompressionRetriever` with multiple techniques such as BM25 with TF-IDF and with a transformer-based semantic search steps. Udacity course project [1] has been extensively used in this report
+In Headroom's `ContextualCompressionRetriever`, a naive BM25 algorithm is used for the selection of retrived documents. Because the compression algorithm operates on an already retrieved, smaller set of documents, it can afford to be more robust without becoming computationally expensive. For that reason, I decided to extend `ContextualCompressionRetriever` with multiple techniques such as BM25 with TF-IDF and with a transformer-based semantic search steps. Udacity course project [1] has been extensively used in this task.
 
 ## Dataset
 
@@ -31,10 +28,8 @@ This dataset provides a realistic evaluation of how different retrieval methods 
 
 ## Methods / Approaches
 
-Looking at the source directly (`headroom/integrations/langchain/retriever.py`), `HeadroomDocumentCompressor`'s relevance scoring is a simplified BM25: it tokenizes the query and document content, applies the standard BM25 term-frequency formula with `k1=1.5` and `b=0.75`. To understand `HeadroomDocumentCompressor` implementation, we need to first understand BM25 retrieval algorithm. BM25 is an improved version of TF-IDF that introduces two additional parameters: term frequency saturation and document length normalization. BM25 measures the relevance of a document to a given query.
-TF (term frequency) captures how often a word occurs within a document. The more frequently a word appears, the higher its TF score. IDF (inverse document frequency) scores a word based on how rare or distinctive it is across the entire corpus of documents, giving more weight to terms that are less common therefore more informative and less weight to terms that appear in most documents.
-
-BM25 improves on plain TF-IDF by adding saturation and normalization. Term frequency saturation ensures that a word's contribution to the score grows more slowly as it appears more times, preventing common or repeated words from dominating the score. Document length normalization ensures that longer documents aren't unfairly favored just because they contain more terms overall, some of which may not be relevant to the query.
+Looking at the [source](`headroom/integrations/langchain/retriever.py`), `HeadroomDocumentCompressor`'s relevance scoring is a simplified BM25: it tokenizes the query and document content, applies the standard BM25 term-frequency formula with `k1=1.5` and `b=0.75`. To understand `HeadroomDocumentCompressor` implementation, we need to first understand BM25 retrieval algorithm. BM25 is an improved version of TF-IDF that introduces two additional parameters: term frequency saturation and document length normalization. BM25 measures the relevance of a document to a given query.
+TF (term frequency) captures how often a word occurs within a document. The more frequently a word appears, the higher its TF score. IDF (inverse document frequency) scores a word based on how rare or distinctive it is across the entire corpus of documents, giving more weight to terms that are less common therefore more informative and less weight to terms that appear in most documents. BM25 improves on plain TF-IDF by adding saturation and normalization. Term frequency saturation ensures that a word's contribution to the score grows more slowly as it appears more times, preventing common or repeated words from dominating the score. Document length normalization ensures that longer documents aren't unfairly favored just because they contain more terms overall, some of which may not be relevant to the query.
 
 `HeadroomDocumentCompressor` substitutes with a hardcoded `avg_dl=100` (average document length) in place of a real corpus derived average document length, and omits IDF effectively ignore the corpus statistics. By default, this BM25 score alone determines which documents are `max_documents`. Jaccard similarity is applied when `prefer_diverse=True`. After the top-scoring document is selected, each subsequent pick is chosen to maximize relevance while minimizing Jaccard similarity (over token sets) to documents already selected, discouraging near duplicate results rather than serving as a second relevance pass.
 
@@ -43,12 +38,11 @@ BM25 improves on plain TF-IDF by adding saturation and normalization. Term frequ
 - No understanding of synonyms or context
 - Struggles with semantic similarity
 
-In this report, I have extended The `HeadroomDocumentCompressor` with the `rank_bm25` package. Here are the scripts  (src/bm25_retriever.py) (src/headroom_bm25.py)
+In this report, I have extended The `HeadroomDocumentCompressor` with the `rank_bm25` package. Here are the scripts  (`src/bm25_retriever.py`) (`src/headroom_bm25.py`) and transformer based compressor (`src/transformer_retriever.py`) (`src/headroom_transformer.py`)
 
-In the report, I have carried out the analysis and evaluated each ot the techniques of naive BM25, standard BM25 and transformers models of miniLM, DistilBert, & BGE-small. I have also provided scripts to finetune transformers to the corpus. Finetuning shows that we can improve the performance of evaluation results further. Transformers gives more scope with customization to improve the performance. Transformers and BM25 learn the representation of the corpus by build_index method and then perform compression (retrieval). Indexing is done only once so it is a sunk cost. Then we can query from the index fast.
+In the report, I have carried out the analysis and evaluated each techniques of naive BM25, standard BM25 and transformers models of miniLM, DistilBert, & BGE-small. I have also provided scripts to fine tune transformers to the corpus. Finetuning shows that we can improve the performance of evaluation results further. Transformers give more scope with customization to improve the performance. Transformers and BM25 learn the representation of the corpus by `build_index` method and then perform compression. Indexing is done only once so it is a sunk cost. We can then query from the index fast.
 
-Transformers are the neural network architecture built around a self-attention mechanism that weighs the relevance of every token to every other token, regardless of distance that powers most modern language models. Transformers generate the embeddings from text tokens.
-Embeddings are numerical vector representations of data (words, sentences, images) where items with similar meaning end up close together in a high-dimensional space, typically learned by a neural network during training. We can use Cosine similarity to numerically score similarity between two vector embeddings. Cosine Similarity measures the angle between vectors ranging from -1 to 1 rather than their magnitude, so a score near 1 means the vectors point in nearly the same direction and represent similar content. Cosine similarity is used to compare those embeddings for tasks like semantic search, recommendations, or retrieval-augmented generation (RAG).
+Transformers are the neural network architecture built around a self-attention mechanism that weighs the relevance of every token to every other token, regardless of distance that powers most modern language models. Transformers generate the embeddings from text tokens. Embeddings are numerical vector representations of data (words, sentences, images) where items with similar meaning end up close together in a high-dimensional space, typically learned by a neural network during training. We can use Cosine similarity to numerically score similarity between two vector embeddings. Cosine Similarity measures the angle between vectors ranging from -1 to 1 rather than their magnitude, so a score near 1 means the vectors point in nearly the same direction and represent similar content. Cosine similarity is used to compare those embeddings for tasks like semantic search, recommendations, or retrieval-augmented generation (RAG).
 
 Transformer retrieval approach enables customizations. This notebook (`notebooks/finetuning-transformer-retrieval.ipynb`) fine-tunes a small sentence-transformer embedding model for dense retrieval and evaluates the improvement. Contrastive loss is used finetune the model with training pairs of (query, correct documents).
 
@@ -93,7 +87,7 @@ Transformer architectures make different trade-offs between size, speed, and tas
 
 ## Codes of using the extension
 
-Below is the adapted version of Example 2 from Headroom Langchain docs using the extensions developed from this report. These scripts that includes the extension of Headroom's Compressor has been suggested to the maintainer of headroom. In `notebooks/unified_retrieval_comparison`, BM25 algorithm does not retrieve correct document for the given query. Headroom's BM25 and Transformers model retrieves correct document. 
+{LINK} Below is the adapted version of Example 2 from Headroom Langchain [docs](https://headroomlabs-ai.github.io/headroom/langchain/) using the extensions developed from this report. These scripts of the extension of Headroom's Compressor has been suggested to the maintainer of headroom as an open-source contributions. In `notebooks/unified_retrieval_comparison`, BM25 algorithm does not retrieve correct document for the given query. Headroom's BM25 and Transformers model retrieves correct document. 
 
 `query = "Which Doctor performed Caesarean?"` 
 
@@ -208,8 +202,6 @@ This file handles the complex BeIR dataset loading and preprocessing.
 #### **🛠️ `src/utils.py`**
 Contains utility functions for text processing and system operations.
 
-There is a tradeoff of computational time in using transformer compressor with accuracy performance boost. Transformer retrieval approach provides huge flexibility. Currently Mini-LM is being used. We can switch models. In this kaggle notebook (`notebooks/semantic-transformers.ipynb`), you can find the performance of the following models.
-
 In the experiments a FAISS vector store retriever is built and benchmarks the latency and output of Headroom's compressor variants (base class, BM25-based, and transformer-based document compression) as a `ContextualCompressionRetriever` wrapped around that base retriever, essentially demonstrating how Headroom's compression layer can be used to filter/re-rank an initial large candidate set. An example, top-100 FAISS results down to a smaller, more relevant set while measuring the added latency.
 
 ## 📊 Below is explanation of the Evaluation Metrics
@@ -238,6 +230,8 @@ In the experiments a FAISS vector store retriever is built and benchmarks the la
 - **Precision@k**: What fraction of retrieved documents are relevant?
 - **MRR (Mean Reciprocal Rank)**: How quickly do we find the first relevant document?
 
+There is a tradeoff of computational time in using transformer compressor with accuracy performance boost.
+
 ### **Quality Assurance: Unit Tests** ✅
 Unit testing has been carried out to ensure code robustness, Your implementation is validated by a comprehensive test suite:
 
@@ -247,7 +241,6 @@ Unit testing has been carried out to ensure code robustness, Your implementation
 - **Consistency**: Deterministic behavior, proper parameter handling
 - **Integration**: Component interaction and data flow
 
-These enhancements/ new features have been shared with the Author of the Headroom as an open-source contributions. [LINK]
 
 Maintainer seems to be actively working on Langchain fixes as seen in the commit https://github.com/headroomlabs-ai/headroom/commit/5d025f7a03870a402918e6425ca9fcd40400edb2
 
